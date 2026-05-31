@@ -1,0 +1,30 @@
+datasource db {
+  provider = "mysql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+
+}
+
+model Category {
+  id Int @id@default(autoincrement()) @unique
+  name String
+  products Product[] 
+
+  @@map("categories")
+}
+
+model Product {
+  id Int @id@default(autoincrement()) @unique
+  name String
+  description String
+  price Float
+  stock Int
+  image_url String?
+  category_id Int
+
+  category Category @relation(fields: [category_id],references: [id], onDelete:Cascade) 
+
+  @@map("products")
+}
