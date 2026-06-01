@@ -1,98 +1,203 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Jomoro Koffee V2 Backend Microservices
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Welcome to the **Jomoro Koffee V2** backend repository. This project is a modern, modular backend system designed using a **Microservices Architecture** with NestJS, Prisma ORM, and MySQL. It is built to efficiently process high-volume online orders, manage catalogs, handle multi-role authorization (Admin/Customer), and automate transactions.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
+## System Architecture
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+The backend is decomposed into three isolated microservices that communicate via HTTP:
 
-## Project setup
+```mermaid
+graph TD
+    subgraph Client Application
+        C[Web/Mobile Client]
+    ```
+    subgraph Microservices Layer
+        A[Auth Service :3001]
+        P[Product Service :3002]
+        T[Transaction Service :3003]
+    end
 
-```bash
-$ npm install
+    subgraph Database Layer
+        DB_A[(jomoro_auth)]
+        DB_P[(jomoro_product)]
+        DB_T[(jomoro_transaction)]
+    end
+
+    C -->|Authenticate| A
+    C -->|Browse Catalog| P
+    C -->|Manage Cart & Checkout| T
+    T -->|Verify Stock & Deduct| P
+    
+    A --> DB_A
+    P --> DB_P
+    T --> DB_T
 ```
 
-## Compile and run the project
+---
+
+## Tech Stack & Technical Constraints
+
+*   **Runtime Environment**: Node.js (v22+)
+*   **Framework**: NestJS (v11.x)
+*   **Database ORM**: Prisma ORM (v6.19.3)
+*   **Database Engine**: MySQL (Local via XAMPP)
+*   **Security & Guarding**: Passport JWT stateless verification
+*   **Documentation**: Swagger API docs enabled on all services
+*   **Constraint (Strict)**: All backend request validations are implemented programmatically **without using Regular Expressions (Regex)**.
+
+---
+
+## Project Structure
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+be-system-jomoro-coffe/
+├── auth-service/           # Handles user profiles, registration, login (Port 3001)
+├── product-service/        # Handles categories, product catalog, and stock (Port 3002)
+├── transaction-service/    # Handles carts, orders, and checkout (Port 3003)
+└── README.md               # Root System Documentation
 ```
 
-## Run tests
+---
+
+## Setup & Installation
+
+### 1. Prerequisites
+Ensure you have **MySQL** running locally (e.g., via XAMPP on port `3306`).
+
+### 2. Database Creation
+Create three empty databases in MySQL (phpMyAdmin or terminal):
+1.  `jomoro_auth`
+2.  `jomoro_product`
+3.  `jomoro_transaction`
+
+### 3. Service Configuration & Environment Files
+Each service contains a `.env` file containing local configurations. Make sure the connections match your environment:
+
+#### Auth Service (`auth-service/.env`)
+```env
+DATABASE_URL="mysql://root:@localhost:3306/jomoro_auth"
+JWT_SECRET="JomoroKoffeeV2SecretKeyForAuthService"
+PORT=3001
+```
+
+#### Product Service (`product-service/.env`)
+```env
+DATABASE_URL="mysql://root:@localhost:3306/jomoro_product"
+JWT_SECRET="JomoroKoffeeV2SecretKeyForAuthService"
+PORT=3002
+```
+
+#### Transaction Service (`transaction-service/.env`)
+```env
+DATABASE_URL="mysql://root:@localhost:3306/jomoro_transaction"
+JWT_SECRET="JomoroKoffeeV2SecretKeyForAuthService"
+PRODUCT_SERVICE_URL="http://localhost:3002"
+PORT=3003
+```
+
+> [!IMPORTANT]
+> All three services use a shared `JWT_SECRET` key to ensure stateless JWT signatures created by the **Auth Service** can be verified by the **Product** and **Transaction** services.
+
+### 4. Install Dependencies & Push Databases
+For each of the three directories (`auth-service/`, `product-service/`, `transaction-service/`), run:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm install
+npx prisma db push
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### 5. Running the Services
+Start the development servers for all three projects:
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# In auth-service directory
+npm run start:dev
+
+# In product-service directory
+npm run start:dev
+
+# In transaction-service directory
+npm run start:dev
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+---
 
-## Resources
+## Custom Backend Validations (No-Regex)
 
-Check out a few resources that may come in handy when working with NestJS:
+Per Requirements Engineering (RE) specifications, all validations are coded strictly using programmatic logic (loops and string checks) to prevent Regex vulnerabilities:
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+1.  **First & Last Name**: Must contain only alphabetic characters (`A-Za-z`). Checked via code loops verifying character codes.
+2.  **Email Extension**: Must end with `.com`, `.net`, `.org`, or `.id`. Checked using string ending matches.
+3.  **Password Strength**: Minimum 8 characters, contains no spaces, and has at least 2 numeric digits. Checked using char-by-char iteration.
+4.  **Product Name**: Must contain at least 3 words. Checked by splitting the name by spaces and filtering empty indices.
+5.  **Product Description**: Must be at least 20 characters long.
+6.  **Product Price & Stock**: Handled as valid numbers. Stock ranges from `0` to `999`. Price must be a positive integer `>= 1`.
 
-## Support
+---
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## API Documentation & Endpoints
 
-## Stay in touch
+### 1. Auth Service (Port `3001`)
+Access Swagger Docs at: [http://localhost:3001/api](http://localhost:3001/api)
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+| Endpoint | Method | Role | Description |
+| :--- | :---: | :---: | :--- |
+| `/auth/register` | `POST` | Public | Register a new user (role: `Admin` or `Customer`). |
+| `/auth/login` | `POST` | Public | Authenticate credentials and return a Bearer JWT token. |
+| `/profiles` | `GET` | Authenticated | Fetch details of the currently logged-in user profile. |
 
-## License
+---
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+### 2. Product Service (Port `3002`)
+Access Swagger Docs at: [http://localhost:3002/api](http://localhost:3002/api)
+
+| Endpoint | Method | Role | Description |
+| :--- | :---: | :---: | :--- |
+| `/products` | `GET` | Public | List all active coffee/accessory products. |
+| `/products/:id` | `GET` | Public | Fetch detailed information of a single product. |
+| `/categories` | `GET` | Public | List all product menu categories. |
+| `/categories/:categoryId/products` | `GET` | Public | Filter products by category ID. |
+| `/admin/products` | `POST` | Admin | Create a new product. |
+| `/admin/products/:id/update` | `POST` | Admin | Update product details. |
+| `/admin/products/:id/delete` | `POST` | Admin | Remove a product. |
+| `/admin/products/:id/reduce` | `POST` | Authenticated | Decrement product stock level (used internally during checkout). |
+
+---
+
+### 3. Transaction Service (Port `3003`)
+Access Swagger Docs at: [http://localhost:3003/api](http://localhost:3003/api)
+
+| Endpoint | Method | Role | Description |
+| :--- | :---: | :---: | :--- |
+| `/cart` | `GET` | Customer | Fetch the customer's active cart with product names and prices. |
+| `/cart` | `POST` | Customer | Add a product to the cart (checks stock availability). |
+| `/cart/:product_id/update` | `POST` | Customer | Modify item quantity in the cart. |
+| `/cart/:product_id/delete` | `POST` | Customer | Remove a specific item from the cart. |
+| `/cart/clear` | `POST` | Customer | Empty all items from the cart. |
+| `/orders` | `GET` | Customer | Fetch the logged-in customer's order history. |
+| `/orders/:id` | `POST` | Customer | Fetch details of a specific past order. |
+| `/orders` | `POST` | Customer | Checkout: creates order, locks prices, reduces product stock, clears cart. |
+
+---
+
+## Integration Testing Flow
+
+To test the system E2E, execute the following steps in order using Swagger or Postman:
+
+1.  **Register Users**:
+    *   Create an Admin Account (`POST http://localhost:3001/auth/register` with role `Admin`).
+    *   Create a Customer Account (`POST http://localhost:3001/auth/register` with role `Customer`).
+2.  **Add a Category**:
+    *   Initialize categories directly inside your `jomoro_product` MySQL database table (e.g. ID `1`, Name `test`).
+3.  **Insert a Product**:
+    *   Log in as Admin (`POST http://localhost:3001/auth/login`) to receive the JWT token.
+    *   Use the Admin JWT token to create a product (`POST http://localhost:3002/admin/products`, stock: `100`).
+4.  **Manage Cart**:
+    *   Log in as Customer (`POST http://localhost:3001/auth/login`) to receive the Customer JWT token.
+    *   Add the product to your cart (`POST http://localhost:3003/cart`).
+    *   Fetch cart (`GET http://localhost:3003/cart`) to check details.
+5.  **Checkout**:
+    *   Execute checkout (`POST http://localhost:3003/orders`).
+    *   Check the Product Service (`GET http://localhost:3002/products/:id`) to verify the stock level was automatically decremented.
