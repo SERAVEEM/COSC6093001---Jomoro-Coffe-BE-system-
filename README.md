@@ -12,7 +12,7 @@ The backend is decomposed into three isolated microservices that communicate via
 graph TD
     subgraph Client Application
         C[Web/Mobile Client]
-    ```
+    end
     subgraph Microservices Layer
         A[Auth Service :3001]
         P[Product Service :3002]
