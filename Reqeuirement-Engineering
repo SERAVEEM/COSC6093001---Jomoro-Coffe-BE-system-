@@ -1,0 +1,107 @@
+DOKUMEN REQUIREMENT ENGINEERING: REKAYASA KEBUTUHAN SISTEM BACKEND JOMORO KOFFEE V2
+Line Spacing: 1.15 | Font: Google Sans / Arial
+1. Ringkasan Proyek (Project Overview)
+Sistem Backend Jomoro Koffee dikembangkan untuk memodernisasi infrastruktur teknologi rantai kedai kopi yang sedang berkembang pesat. Sistem dirancang menggunakan arsitektur microservices berbasis NestJS guna menangani peningkatan lalu lintas pesanan online secara terukur dan efisien pada jam sibuk. Platform backend ini berfokus pada manajemen katalog produk aksesori teknologi, pengelolaan keranjang belanja, proses transaksi checkout, serta otentikasi multi-peran (Admin, Customer, dan Guest).
+2. Batasan Teknis & Aturan Pengembangan (Technical Constraints)
+Runtime Environment: NodeJS v22.16.0
+Framework & Architecture: NestJS Framework dengan proyek terpisah untuk setiap komponen microservice.
+Database: MySQL dengan pengelolaan skema terisolasi di setiap service menggunakan Prisma Client (Prisma ORM atau Raw Queries).
+Validasi: Seluruh validasi data wajib ditangani di sisi backend tanpa menggunakan Regular Expression (ReGex).
+Alat Pendukung: Visual Studio Code, XAMPP v8.2.12 (untuk local MySQL), dan Google Chrome.
+3. Arsitektur Microservices & Struktur Port
+Sistem harus dibagi menjadi 3 proyek NestJS terpisah dengan ketentuan port dan deskripsi fungsional sebagai berikut:
+Nama Layanan (Service Name)
+Port
+Deskripsi Fungsional
+ 
+Auth Service
+3001
+Menangani registrasi pengguna, login, dan pembuatan token JWT.
+Product Service
+3002
+Mengelola operasi produk (CRUD), kategori menu, dan inventaris stok.
+Transaction Service
+3003
+Menangani pengelolaan keranjang belanja, pesanan (orders), dan alur checkout.
+Setiap layanan wajib mengaktifkan CORS untuk mengizinkan komunikasi antar-layanan menggunakan metode fetch bawaan atau pustaka axios.
+4. Kebutuhan Fungsional (Functional Requirements)
+4.1 Auth Service (Port: 3001)
+RF-01: Registrasi Pengguna Baru (POST /auth/register)
+Input: first_name (hanya huruf), last_name (hanya huruf), email (diakhiri .com, .net, .org, atau .id), password (tanpa spasi, min 8 karakter, min 2 digit angka).
+Logika: Memeriksa keunikan email di database. Jika unik, simpan user dengan password berformat plain text.
+RF-02: Otentikasi & Login (POST /auth/login)
+Input: email, password.
+Logika: Memvalidasi kredensial pengguna. Jika cocok, generate JWT Access Token yang berisi payload id dan role pengguna.
+RF-03: Profil Pengguna (GET /profiles)
+Mengembalikan informasi akun pengguna terautentikasi (first name, last name, email, dan role) yang diekstrak dari token JWT.
+4.2 Product Service (Port: 3002)
+RF-04: Katalog Produk & Kategori (Public Endpoints)
+GET /products - Menampilkan daftar seluruh produk.
+GET /products/:id - Menampilkan rincian detail produk spesifik.
+GET /categories - Menampilkan seluruh kategori menu.
+GET /categories/:categoryId/products - Menyaring daftar produk berdasarkan kategori tertentu.
+RF-05: Manajemen Produk (Admin Only - POST Endpoints)
+POST /admin/products - Membuat produk baru. Validasi: nama (min 3 kata), deskripsi (min 20 karakter), harga (integer positif min 1), stok (rentang 0-999), category_id (integer valid).
+POST /admin/products/:id/update - Memperbarui detail data produk dengan aturan validasi yang sama.
+POST /admin/products/:id/reduce - Mengurangi jumlah kuantitas stok produk. Menghasilkan error jika pengurangan melebihi stok aktual.
+POST /admin/products/:id/delete - Menghapus data produk dari database.
+4.3 Transaction Service (Port: 3003)
+RF-06: Pengelolaan Keranjang Belanja (Customer Only)
+GET /cart - Mengambil kuantitas item pengguna dan memanggil Product Service untuk melengkapi nama serta harga produk.
+POST /cart - Menambahkan produk ke keranjang belanja (kuantitas tidak boleh melebihi stok, produk belum boleh ada di keranjang). Jika belum ada rekam keranjang aktif, sistem otomatis membuat rekam parent baru.
+POST /cart/:product_id/update - Memperbarui kuantitas produk di dalam keranjang belanja.
+POST /cart/:product_id/delete - Menghapus item tertentu dari keranjang belanja.
+POST /cart/clear - Mengosongkan seluruh isi keranjang belanja milik pengguna.
+RF-07: Manajemen & Riwayat Pesanan (Customer Only)
+GET /orders - Menampilkan daftar seluruh riwayat pesanan milik pengguna terautentikasi.
+POST /orders/:id - Mengambil detail pesanan dan mengambil informasi nama produk dari Product Service.
+RF-08: Proses Transaksi Checkout (POST /orders)
+Logika: Memastikan keranjang tidak kosong. Membuat rekam data utama pada tabel orders dan memindahkan setiap item keranjang ke tabel order_details (menyimpan snapshot harga saat pembelian). Sistem kemudian memanggil Product Service secara internal untuk memotong stok inventaris secara aktual.
+5. Kebutuhan Non-Fungsional (Non-Functional Requirements)
+Keamanan & Otorisasi: Implementasi JWT Passport Strategy pada Guard di setiap layanan untuk membatasi akses endpoint rute terproteksi. Token wajib dilewatkan pada komponen HTTP Request header dengan format Authorization: Bearer <jwt_token>.
+Dokumentasi API: Seluruh proyek microservice wajib mengimplementasikan Swagger untuk kebutuhan pengujian integrasi antarmuka program aplikasi (API testing).
+6. Arsitektur Data & Skema Model Database
+Layanan
+Nama Tabel
+Kolom Utama & Struktur Data
+ 
+Auth Service
+users
+id (INT, PK), first_name (VARCHAR), last_name (VARCHAR), email (VARCHAR), password (VARCHAR - Plain Text), role (VARCHAR)
+Product Service
+categories
+products
+categories: id (INT, PK), name (VARCHAR)
+products: id (INT, PK), name (VARCHAR), description (VARCHAR), price (DOUBLE), stock (INT), image_url (VARCHAR, Nullable), category_id (INT, FK)
+Transaction Service
+carts
+cart_items
+orders
+order_details
+carts: id (INT, PK), user_id (INT)
+cart_items: id (INT, PK), cart_id (INT, FK), product_id (INT), quantity (INT)
+orders: id (INT, PK), user_id (INT), created_at (DATETIME)
+order_details: id (INT, PK), order_id (INT, FK), product_id (INT), price (DOUBLE), quantity (INT)
+7. Matriks Kriteria Penilaian Evaluasi Proyek
+Komponen Utama Penilaian
+Sub-Kriteria Evaluasi Teknis
+Bobot Skor
+ 
+Microservice
+Calling Service (05) | Parsing Data (05) | Completeness (10)
+20
+Database dengan Prisma ORM
+Setup Database Scheme (10) | Prisma Usage (10) | CRUD Operation (20)
+40
+Authentication dengan JWT Token
+Generate Bearer Token (05) | Bearer Token Verification (05)
+10
+Logic
+Penanganan alur validasi backend & eksekusi tindakan logika bisnis
+20
+Swagger API Documentation
+Implementasi dokumentasi pengujian interaktif pada seluruh layanan
+10
+TOTAL SKOR MAKSIMAL
+Evaluasi Komparatif Sesuai Standar Laboratorium Perangkat Lunak
+100
