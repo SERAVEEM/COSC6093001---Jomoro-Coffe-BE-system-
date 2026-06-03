@@ -6,84 +6,84 @@ export declare class AppController {
     getHello(): string;
     getAllProducts(): Promise<({
         category: {
-            id: number;
             name: string;
+            id: number;
         };
     } & {
-        id: number;
-        name: string;
         description: string;
+        name: string;
         price: number;
         stock: number;
         image_url: string | null;
         category_id: number;
+        id: number;
     })[]>;
     getProductById(id: number): Promise<{
         category: {
-            id: number;
             name: string;
+            id: number;
         };
     } & {
-        id: number;
-        name: string;
         description: string;
+        name: string;
         price: number;
         stock: number;
         image_url: string | null;
         category_id: number;
+        id: number;
     }>;
     getAllCategories(): Promise<{
-        id: number;
         name: string;
+        id: number;
     }[]>;
     getProductsByCategory(categoryId: number): Promise<({
         category: {
-            id: number;
             name: string;
+            id: number;
         };
     } & {
-        id: number;
-        name: string;
         description: string;
+        name: string;
         price: number;
         stock: number;
         image_url: string | null;
         category_id: number;
+        id: number;
     })[]>;
     createProduct(dto: CreateProductDto): Promise<{
-        id: number;
-        name: string;
         description: string;
+        name: string;
         price: number;
         stock: number;
         image_url: string | null;
         category_id: number;
+        id: number;
     }>;
     updateProduct(id: number, dto: CreateProductDto): Promise<{
-        id: number;
-        name: string;
         description: string;
+        name: string;
         price: number;
         stock: number;
         image_url: string | null;
         category_id: number;
+        id: number;
     }>;
     deleteProduct(id: number): Promise<{
-        id: number;
-        name: string;
         description: string;
+        name: string;
         price: number;
         stock: number;
         image_url: string | null;
         category_id: number;
+        id: number;
     }>;
     reduceStock(id: number, dto: ReduceStockDto): Promise<{
-        id: number;
-        name: string;
         description: string;
+        name: string;
         price: number;
         stock: number;
         image_url: string | null;
         category_id: number;
+        id: number;
     }>;
 }
